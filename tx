@@ -1,0 +1,124 @@
+#!/usr/bin/env node
+
+(function (rest, Q) {
+  'use strict';
+
+  var action = process.argv[2];
+  var txProject = process.argv[3];
+  var txResource = process.argv[4];
+  // skip (node + tx.js + action + project + resource)
+  var args = process.argv.splice(5);
+
+  var baseUrl = 'https://www.transifex.com/api/2';
+  var transifexResourceUrl = baseUrl + '/project/' + txProject + '/resource/' + txResource + '/content';
+
+  switch (action) {
+    case 'rm':
+      getResource()
+        .then(removeKeysFromResource, throwError)
+        .then(updateTransifexResource, throwError)
+        .done();
+      break;
+    case 'add':
+      getResource()
+        .then(addKeysToResource, throwError)
+        .then(updateTransifexResource, throwError)
+        .done();
+      break;
+    default:
+      console.log('The action "' + action + '" is not supported');
+  }
+
+  /**
+   * Get resource content from Transifex
+   * @return {Q.Promise} 
+   */
+  function getResource() {
+    var deferred = Q.defer();
+
+    rest
+      .get(transifexResourceUrl, {
+        username: process.env.TX_USER,
+        password: process.env.TX_PASS
+      })
+      .on('success', function (data, response) {
+        deferred.resolve(JSON.parse(data.content));
+      })
+      .on('fail', function (err, response) {
+        deferred.reject(err);
+      })
+      .on('error', function (err, response) {
+        deferred.reject(err);
+      });
+
+    return deferred.promise;
+  }
+
+  /**
+   * Update resource on Transifex with the new content
+   * @param  {Object} resourceContent 
+   * @return {Q.Promise} 
+   */
+  function updateTransifexResource(resourceContent) {
+    var deferred = Q.defer();
+
+    console.log('Uploading updated resource to Transifex...');
+
+    rest.put(transifexResourceUrl, {
+        headers: {
+          "Content-Type": "application/json"
+        },
+        data: JSON.stringify({ "content": JSON.stringify(resourceContent)}),
+        username: process.env.TX_USER,
+        password: process.env.TX_PASS
+      })
+      .on('success', function (data, response) {
+        console.log('Transifex resource updated');
+        deferred.resolve(data);
+      })
+      .on('fail', function (err, response) {
+        deferred.reject(err);
+      });
+
+    return deferred.promise;
+  }
+
+  /**
+   * Remove keys (args) from resource content
+   * @param  {Object} resourceContent 
+   * @return {Q.Promise} 
+   */
+  function removeKeysFromResource(resourceContent) {
+    console.log('Removing keys from resource "' + txResource + '" of project "' + txProject + '"');
+    var resourceKeysBefore = Object.keys(resourceContent);
+    args.forEach(function (key) {
+      delete resourceContent[key];
+    });
+    var resourceKeysAfter = Object.keys(resourceContent);
+    console.log('Number of keys that will be deleted: ' + (resourceKeysBefore.length - resourceKeysAfter.length));
+    return Q.when(resourceContent);
+  }
+
+  /**
+   * Add keys (args) to resource content
+   * @param  {Object} resourceContent 
+   * @return {Q.Promise} 
+   */
+  function addKeysToResource(resourceContent) {
+    console.log('Adding keys to resource "' + txResource + '" of project "' + txProject + '"');
+    var resourceKeysBefore = Object.keys(resourceContent);
+    args.forEach(function (key) {
+      if (!resourceContent[key]) {
+        resourceContent[key] = key;
+      }
+    });
+    var resourceKeysAfter = Object.keys(resourceContent);
+    console.log('Number of keys that will be added: ' + (resourceKeysAfter.length - resourceKeysBefore.length));
+    return Q.when(resourceContent);
+  }
+
+  function throwError(err) {
+    throw new Error(err);
+  }
+
+})(require('restler'), require('q'));
