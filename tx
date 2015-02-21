@@ -9,6 +9,8 @@
   // skip (node + tx.js + action + project + resource)
   var args = process.argv.splice(5);
 
+  txResource = txResource.replace(/\./g, '');
+
   var baseUrl = 'https://www.transifex.com/api/2';
   var transifexResourceUrl = baseUrl + '/project/' + txProject + '/resource/' + txResource + '/content';
 
