@@ -14,6 +14,7 @@ Put the `tx` script in `~/bin` folder. Make sure this folder is in your PATH var
 
 One-shot command:
 ```
+mkdir -p ~/bin
 curl -o ~/bin/tx https://raw.githubusercontent.com/ruizb/tx-tools/master/tx &&
 chmod +x ~/bin/tx &&
 cd ~/bin/ &&
