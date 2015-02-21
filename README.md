@@ -1,6 +1,9 @@
 # tx-tools
 This is a command-line script to perform some actions related to Transifex.
 
+## Resource files support
+Currently, only **JSON (key, value)** resources are supported.
+
 ## Requirements
 To run this script, you need to have **NodeJS** installed on your machine.
 In addition, the script needs your Transifex credentials. To provide them, make sure to export these 2 environment variables in your `~/.bash_profile` file:
