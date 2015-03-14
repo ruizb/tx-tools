@@ -34,6 +34,16 @@
         }, throwError)
         .done();
       break;
+    case 'test':
+      getResource()
+        .then(function (data) {
+          data.Ads = 'Ads';
+          delete data.AdsTEST2;
+          return data;
+        })
+        .then(updateTransifexResource, throwError)
+        .done();
+      break;
     default:
       console.log('The action "' + action + '" is not supported');
   }
@@ -196,6 +206,7 @@
    * @return {String} 
    */
   function getHashString(word, context) {
+    word = word.replace(/\./g, '\\.');
     context = context || '';
     var md5sum = crypto.createHash('md5');
     md5sum.update([word, context].join(':'), 'utf-8');
