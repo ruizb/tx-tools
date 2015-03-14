@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 
-(function (rest, Q) {
+(function (crypto, rest, Q) {
   'use strict';
 
   var action = process.argv[2];
@@ -25,6 +25,13 @@
       getResource()
         .then(addKeysToResource, throwError)
         .then(updateTransifexResource, throwError)
+        .done();
+      break;
+    case 'comment':
+      getStringFromTx(args[0])
+        .then(function () {
+          return setCommentForString(args[0], args[1]);
+        }, throwError)
         .done();
       break;
     default:
@@ -119,8 +126,84 @@
     return Q.when(resourceContent);
   }
 
+  /**
+   * Get the string from Transifex to check if it exists
+   * @param  {String} word 
+   * @return {Q.Promise} 
+   */
+  function getStringFromTx(word) {
+    var deferred = Q.defer();
+    var url = baseUrl + '/project/' + txProject + '/resource/' + txResource + '/source/' + getHashString(word);
+
+    console.log('Fetching string "' + word + '" on Transifex...');
+
+    rest
+      .get(url, {
+        username: process.env.TX_USER,
+        password: process.env.TX_PASS
+      })
+      .on('success', function (data, response) {
+        console.log('String "' + word + '" found!');
+        deferred.resolve(data);
+      })
+      .on('fail', function (err, response) {
+        console.log('String "' + word + '" not found!');
+        deferred.reject(err);
+      })
+      .on('error', function (err, response) {
+        deferred.reject(err);
+      });
+
+    return deferred.promise;
+  }
+
+  /**
+   * Update word on the Transifex resource to display the users's comment
+   * @param {String} word 
+   * @param {String} comment 
+   * @return {Q.Promise} 
+   */
+  function setCommentForString(word, comment) {
+    var deferred = Q.defer();
+    var url = baseUrl + '/project/' + txProject + '/resource/' + txResource + '/source/' + getHashString(word);
+
+    console.log('Adding comment "' + comment + '" on string "' + word + '" on Transifex...');
+
+    rest.put(url, {
+        headers: {
+          "Content-Type": "application/json"
+        },
+        data: JSON.stringify({ "comment": comment }),
+        username: process.env.TX_USER,
+        password: process.env.TX_PASS
+      })
+      .on('success', function (data, response) {
+        console.log('Transifex string "' + word + '" successfully updated!');
+        deferred.resolve(data);
+      })
+      .on('fail', function (err, response) {
+        console.log('Transifex string "' + word + '" could not be updated.');
+        deferred.reject(err);
+      });
+
+    return deferred.promise;
+  }
+
+  /**
+   * Compute the hash string for the given word+context
+   * @param  {String} word 
+   * @param  {String} context 
+   * @return {String} 
+   */
+  function getHashString(word, context) {
+    context = context || '';
+    var md5sum = crypto.createHash('md5');
+    md5sum.update([word, context].join(':'), 'utf-8');
+    return md5sum.digest('hex');
+  }
+
   function throwError(err) {
     throw new Error(err);
   }
 
-})(require('restler'), require('q'));
+})(require('crypto'), require('restler'), require('q'));
