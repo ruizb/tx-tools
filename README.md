@@ -26,7 +26,7 @@ mkdir -p ~/bin &&
 curl -o ~/bin/tx https://raw.githubusercontent.com/ruizb/tx-tools/master/tx &&
 chmod +x ~/bin/tx &&
 cd ~/bin/ &&
-npm install q restler minimist &&
+npm install q restler &&
 cd -
 ```
 
@@ -47,7 +47,7 @@ tx rm project-slug resource-slug word1 word2 ... wordN
 Use the next command to set the comment of a word from a resource:
 
 ```
-tx comment project-slug resource-slug word1 'This is the command for word1'
+tx comment project-slug resource-slug word1 'This is the comment for word1'
 ```
 
 ## Examples
