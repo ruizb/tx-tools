@@ -34,16 +34,6 @@
         }, throwError)
         .done();
       break;
-    case 'test':
-      getResource()
-        .then(function (data) {
-          data.Ads = 'Ads';
-          delete data.AdsTEST2;
-          return data;
-        })
-        .then(updateTransifexResource, throwError)
-        .done();
-      break;
     default:
       console.log('The action "' + action + '" is not supported');
   }
